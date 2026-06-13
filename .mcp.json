@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "mba-tshirt": {
+      "type": "http",
+      "url": "https://mcp.mba.ooopppmmm.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${MBA_API_TOKEN}"
+      }
+    }
+  }
+}

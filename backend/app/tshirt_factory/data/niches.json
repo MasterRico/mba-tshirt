@@ -1,0 +1,102 @@
+{
+  "evergreen_niches": [
+    {
+      "name": "dad_jokes",
+      "keywords": ["dad", "father", "dad joke", "dad bod", "bonus dad", "stepdad"],
+      "audiences": ["fathers", "new dads", "gift buyers"],
+      "design_types": ["text_only", "text_with_icon"],
+      "humor_types": ["pun", "sarcasm", "wholesome"]
+    },
+    {
+      "name": "nurse_life",
+      "keywords": ["nurse", "nursing", "RN", "CNA", "LPN", "scrubs", "night shift"],
+      "audiences": ["nurses", "nursing students", "healthcare workers"],
+      "design_types": ["text_only", "text_with_icon"],
+      "humor_types": ["sarcasm", "dark_humor", "relatable"]
+    },
+    {
+      "name": "teacher_life",
+      "keywords": ["teacher", "teaching", "school", "educator", "classroom"],
+      "audiences": ["teachers", "professors", "homeschool parents"],
+      "design_types": ["text_only", "text_with_icon"],
+      "humor_types": ["sarcasm", "relatable", "wholesome"]
+    },
+    {
+      "name": "gym_fitness",
+      "keywords": ["gym", "workout", "fitness", "gains", "lifting", "bodybuilding"],
+      "audiences": ["gym goers", "fitness enthusiasts", "bodybuilders"],
+      "design_types": ["text_only", "typography_art"],
+      "humor_types": ["motivational", "sarcasm", "pun"]
+    },
+    {
+      "name": "dog_lover",
+      "keywords": ["dog", "puppy", "dog mom", "dog dad", "rescue", "breed names"],
+      "audiences": ["dog owners", "dog breeders", "rescue advocates"],
+      "design_types": ["text_with_icon", "illustration"],
+      "humor_types": ["wholesome", "relatable", "pun"]
+    },
+    {
+      "name": "cat_lover",
+      "keywords": ["cat", "kitten", "cat mom", "cat dad", "crazy cat lady"],
+      "audiences": ["cat owners", "cat enthusiasts"],
+      "design_types": ["text_with_icon", "illustration"],
+      "humor_types": ["sarcasm", "wholesome", "relatable"]
+    },
+    {
+      "name": "fishing",
+      "keywords": ["fishing", "bass", "fly fishing", "angler", "reel", "tackle"],
+      "audiences": ["fishermen", "outdoor enthusiasts", "bass anglers"],
+      "design_types": ["text_with_icon", "illustration"],
+      "humor_types": ["pun", "sarcasm", "wholesome"]
+    },
+    {
+      "name": "programmer_tech",
+      "keywords": ["coding", "programmer", "developer", "software", "bug", "code"],
+      "audiences": ["developers", "IT professionals", "tech workers"],
+      "design_types": ["text_only", "text_with_icon"],
+      "humor_types": ["nerd_humor", "pun", "sarcasm"]
+    },
+    {
+      "name": "coffee_addict",
+      "keywords": ["coffee", "caffeine", "espresso", "morning", "coffee lover"],
+      "audiences": ["coffee lovers", "baristas", "morning people"],
+      "design_types": ["text_only", "text_with_icon", "typography_art"],
+      "humor_types": ["relatable", "sarcasm", "pun"]
+    },
+    {
+      "name": "introvert_antisocial",
+      "keywords": ["introvert", "antisocial", "homebody", "alone", "books", "cancel plans"],
+      "audiences": ["introverts", "bookworms", "homebodies"],
+      "design_types": ["text_only", "text_with_icon"],
+      "humor_types": ["sarcasm", "relatable", "dark_humor"]
+    }
+  ],
+  "trending_categories": [
+    "ai_tech_humor",
+    "remote_work",
+    "mental_health_awareness",
+    "plant_parent",
+    "true_crime_fan",
+    "pickleball",
+    "van_life",
+    "cottage_core",
+    "bookish",
+    "spicy_book_reader"
+  ],
+  "design_type_weights": {
+    "text_only": 0.40,
+    "text_with_icon": 0.30,
+    "illustration": 0.15,
+    "typography_art": 0.15
+  },
+  "humor_effectiveness_baseline": {
+    "pun": 0.7,
+    "sarcasm": 0.8,
+    "wholesome": 0.6,
+    "relatable": 0.75,
+    "dark_humor": 0.5,
+    "motivational": 0.55,
+    "nerd_humor": 0.65,
+    "none": 0.4
+  }
+}

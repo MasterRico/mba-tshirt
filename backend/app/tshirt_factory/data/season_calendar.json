@@ -1,0 +1,125 @@
+{
+  "seasons": [
+    {
+      "event": "valentines_day",
+      "name": "Valentine's Day",
+      "date_month": 2,
+      "date_day": 14,
+      "upload_start_month": 12,
+      "upload_start_day": 15,
+      "niches": ["couples", "love", "funny_relationship", "anti_valentines"],
+      "keywords": ["valentine", "love", "heart", "couples", "boyfriend", "girlfriend", "husband", "wife"],
+      "priority": "high"
+    },
+    {
+      "event": "st_patricks",
+      "name": "St. Patrick's Day",
+      "date_month": 3,
+      "date_day": 17,
+      "upload_start_month": 1,
+      "upload_start_day": 15,
+      "niches": ["irish", "drinking_humor", "lucky"],
+      "keywords": ["irish", "lucky", "shamrock", "green", "beer", "drinking"],
+      "priority": "medium"
+    },
+    {
+      "event": "easter",
+      "name": "Easter",
+      "date_month": 4,
+      "date_day": 1,
+      "upload_start_month": 2,
+      "upload_start_day": 1,
+      "niches": ["christian", "family", "funny_easter"],
+      "keywords": ["easter", "bunny", "egg", "spring", "resurrection"],
+      "priority": "medium"
+    },
+    {
+      "event": "mothers_day",
+      "name": "Mother's Day",
+      "date_month": 5,
+      "date_day": 12,
+      "upload_start_month": 3,
+      "upload_start_day": 1,
+      "niches": ["mom_humor", "family", "grandma", "new_mom"],
+      "keywords": ["mom", "mother", "mama", "grandma", "motherhood", "best mom"],
+      "priority": "high"
+    },
+    {
+      "event": "fathers_day",
+      "name": "Father's Day",
+      "date_month": 6,
+      "date_day": 15,
+      "upload_start_month": 4,
+      "upload_start_day": 1,
+      "niches": ["dad_humor", "dad_jokes", "grandpa", "new_dad"],
+      "keywords": ["dad", "father", "papa", "grandpa", "fatherhood", "dad jokes", "best dad"],
+      "priority": "high"
+    },
+    {
+      "event": "independence_day",
+      "name": "4th of July",
+      "date_month": 7,
+      "date_day": 4,
+      "upload_start_month": 5,
+      "upload_start_day": 1,
+      "niches": ["patriotic", "american", "bbq_humor"],
+      "keywords": ["america", "patriotic", "freedom", "4th july", "fireworks", "bbq", "merica"],
+      "priority": "high"
+    },
+    {
+      "event": "back_to_school",
+      "name": "Back to School",
+      "date_month": 8,
+      "date_day": 15,
+      "upload_start_month": 6,
+      "upload_start_day": 15,
+      "niches": ["teacher", "student", "school_humor"],
+      "keywords": ["teacher", "school", "student", "back to school", "first day", "kindergarten"],
+      "priority": "medium"
+    },
+    {
+      "event": "halloween",
+      "name": "Halloween",
+      "date_month": 10,
+      "date_day": 31,
+      "upload_start_month": 8,
+      "upload_start_day": 1,
+      "niches": ["horror", "funny_halloween", "costume_alternative"],
+      "keywords": ["halloween", "spooky", "witch", "ghost", "skeleton", "pumpkin", "horror"],
+      "priority": "high"
+    },
+    {
+      "event": "thanksgiving",
+      "name": "Thanksgiving",
+      "date_month": 11,
+      "date_day": 28,
+      "upload_start_month": 9,
+      "upload_start_day": 15,
+      "niches": ["food_humor", "family_gathering", "thankful"],
+      "keywords": ["thanksgiving", "turkey", "thankful", "grateful", "feast", "food"],
+      "priority": "medium"
+    },
+    {
+      "event": "christmas",
+      "name": "Christmas",
+      "date_month": 12,
+      "date_day": 25,
+      "upload_start_month": 9,
+      "upload_start_day": 1,
+      "niches": ["christmas_humor", "ugly_sweater", "family_christmas"],
+      "keywords": ["christmas", "santa", "xmas", "holiday", "merry", "winter", "elf", "reindeer"],
+      "priority": "critical"
+    },
+    {
+      "event": "new_years",
+      "name": "New Year's",
+      "date_month": 1,
+      "date_day": 1,
+      "upload_start_month": 11,
+      "upload_start_day": 1,
+      "niches": ["party", "resolutions_humor", "new_beginnings"],
+      "keywords": ["new year", "2027", "resolution", "party", "celebrate"],
+      "priority": "medium"
+    }
+  ]
+}

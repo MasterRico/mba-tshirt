@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.health-excellent { @apply bg-green-100 text-green-800; }
+.health-good { @apply bg-emerald-100 text-emerald-800; }
+.health-warning { @apply bg-yellow-100 text-yellow-800; }
+.health-poor { @apply bg-orange-100 text-orange-800; }
+.health-critical { @apply bg-red-100 text-red-800; }
