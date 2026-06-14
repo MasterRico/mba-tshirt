@@ -180,3 +180,10 @@ class LearningInsightOut(BaseModel):
     last_updated: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
+
+
+# ─── MBA Account Sales ────────────────────────────────────────────────
+
+class SalesImportIn(BaseModel):
+    """Roh-CSV aus dem Merch 'earnings'-Export (transaktionsbasiert)."""
+    csv_data: str

@@ -52,6 +52,10 @@ export const api = {
     getPerformanceSummary: () => request('/tsf/performance/summary'),
     getNichePerformance: () => request('/tsf/performance/by-niche'),
 
+    // MBA Account Sales (echte Konto-Zahlen, design-unabhaengig)
+    getSalesSummary: () => request('/tsf/sales/summary'),
+    importSales: (csvData) => request('/tsf/sales/import', { method: 'POST', body: JSON.stringify({ csv_data: csvData }) }),
+
     // Compliance
     checkTrademarks: (terms) => request('/tsf/compliance/check', { method: 'POST', body: JSON.stringify({ terms }) }),
 

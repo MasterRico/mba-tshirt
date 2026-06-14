@@ -373,3 +373,31 @@ async def get_suggestions(keyword: str, db: AsyncSession = Depends(get_db)):
         return {"keyword": keyword, "suggestions": await kw.get_amazon_suggestions(keyword)}
     finally:
         await kw.close()
+
+
+# ─── MBA Account Sales (echte Konto-Zahlen) ───────────────────────────
+
+from app.tshirt_factory.schemas import SalesImportIn  # noqa: E402
+
+
+@router.post("/sales/import")
+async def import_mba_sales(
+    data: SalesImportIn,
+    db: AsyncSession = Depends(get_db),
+):
+    """Importiert den rohen Merch 'earnings'-Export (transaktionsbasiert).
+
+    Aggregiert serverseitig je (ASIN, Marketplace, Monat) und speichert
+    idempotent. Liefert die echten Konto-Zahlen unabhaengig von Designs.
+    """
+    from app.tshirt_factory.engines.sales import SalesTracker
+    tracker = SalesTracker(db)
+    return await tracker.import_raw_csv(data.csv_data)
+
+
+@router.get("/sales/summary")
+async def get_mba_sales_summary(db: AsyncSession = Depends(get_db)):
+    """Konto-Umsatz: Totals je Waehrung, Units, Monatsverlauf, Top-Produkte."""
+    from app.tshirt_factory.engines.sales import SalesTracker
+    tracker = SalesTracker(db)
+    return await tracker.get_summary()

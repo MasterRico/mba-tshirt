@@ -253,3 +253,34 @@ class LearningInsight(Base):
     __table_args__ = (
         Index("idx_insight_cat_key", "category", "insight_key"),
     )
+
+
+# ─── MBA Account Sales (echte Verkaufsdaten, design-unabhaengig) ──────
+
+from sqlalchemy import UniqueConstraint as _UniqueConstraint
+
+
+class MbaSale(Base):
+    """Aggregierte echte MBA-Konto-Verkaeufe pro (ASIN, Marketplace, Monat).
+
+    Design-unabhaengig: bildet das tatsaechliche Merch-Konto ab, nicht nur
+    Factory-generierte Designs. Befuellt via POST /sales/import (Roh-Export).
+    Idempotent: Re-Import desselben Monats ueberschreibt den Aggregat-Wert.
+    """
+    __tablename__ = "tsf_mba_sales"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    asin = Column(String(20), nullable=False)
+    title = Column(String(500), nullable=True)
+    marketplace = Column(String(10), nullable=False, default="com")  # com, de, co.uk, ...
+    year_month = Column(String(7), nullable=False)  # "2026-04"
+    currency = Column(String(8), nullable=False, default="USD")
+    units = Column(Integer, default=0)
+    earnings = Column(Float, default=0.0)  # in nativer Waehrung
+    last_updated = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        _UniqueConstraint("asin", "marketplace", "year_month", name="uq_mba_sale_period"),
+        Index("idx_mba_sale_ym", "year_month"),
+        Index("idx_mba_sale_asin", "asin"),
+    )

@@ -5,11 +5,12 @@ import StatCard from '../../components/StatCard'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import {
   Shirt, TrendingUp, Brain, RotateCcw, Zap, Calendar,
-  Target, AlertTriangle, CheckCircle, BarChart3
+  Target, AlertTriangle, CheckCircle, BarChart3, Wallet
 } from 'lucide-react'
 
 export default function TsfDashboard() {
   const [data, setData] = useState(null)
+  const [sales, setSales] = useState(null)
   const [loading, setLoading] = useState(true)
   const [pipelineRunning, setPipelineRunning] = useState(false)
 
@@ -25,6 +26,12 @@ export default function TsfDashboard() {
       console.error('Dashboard load failed:', err)
     } finally {
       setLoading(false)
+    }
+    try {
+      const s = await api.tsf.getSalesSummary()
+      setSales(s)
+    } catch (err) {
+      console.error('Sales summary load failed:', err)
     }
   }
 
@@ -113,6 +120,47 @@ export default function TsfDashboard() {
           value={`$${(perf.avg_revenue_per_design || 0).toFixed(2)}`}
           icon={<BarChart3 size={20} className="text-indigo-500" />}
         />
+      </div>
+
+      {/* Konto-Umsatz: echte MBA-Verkaeufe (design-unabhaengig) */}
+      <div className="bg-white rounded-xl shadow-sm border p-6">
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <Wallet size={20} className="text-emerald-600" /> Konto-Umsatz (echte MBA-Verkäufe)
+        </h2>
+        {sales && sales.total_units > 0 ? (
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <StatCard label="Σ Umsatz (≈ EUR)" value={`€${(sales.combined_eur_estimate || 0).toFixed(2)}`} icon={<Wallet size={20} className="text-emerald-500" />} />
+              <StatCard label="Verkaufte Einheiten" value={sales.total_units || 0} icon={<TrendingUp size={20} className="text-blue-500" />} />
+              <StatCard label="Produkte" value={sales.distinct_products || 0} icon={<Shirt size={20} className="text-purple-500" />} />
+              <StatCard label="Umsatz nach Währung" value={Object.entries(sales.totals_by_currency || {}).map(([c, v]) => `${v.toFixed(2)} ${c}`).join(' · ') || '—'} icon={<BarChart3 size={20} className="text-green-500" />} />
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-gray-500 border-b">
+                    <th className="py-2">Top-Produkt</th><th>ASIN</th><th className="text-right">Units</th><th className="text-right">≈ EUR</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(sales.top_products || []).map((prod, i) => (
+                    <tr key={i} className="border-b last:border-0">
+                      <td className="py-2 pr-2">{prod.title}</td>
+                      <td className="text-gray-500">{prod.asin}</td>
+                      <td className="text-right">{prod.units}</td>
+                      <td className="text-right">€{(prod.earnings_eur || 0).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-xs text-gray-400 mt-3">{sales.fx_note}</p>
+          </>
+        ) : (
+          <p className="text-gray-400 text-center py-4">
+            Noch keine Konto-Verkäufe importiert.
+          </p>
+        )}
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
