@@ -154,7 +154,7 @@ class KeywordEngine:
 
         # Build optimized title (max 80 chars for MBA)
         title_keywords = primary_kws[:3] + design_keywords[:2]
-        title = self._build_listing_title(primary_text, title_keywords, max_len=80)
+        title = self._build_listing_title(primary_text, title_keywords, max_len=60)
 
         # Build bullet points (max 256 chars each)
         bullet1 = self._build_bullet(
@@ -231,25 +231,26 @@ class KeywordEngine:
         return long_tails
 
     def _build_listing_title(self, design_text: str, keywords: list[str],
-                             max_len: int = 80) -> str:
-        """Build an SEO-optimized listing title."""
-        # Start with the main design text
-        parts = [design_text]
-
-        # Add keywords that fit
+                             max_len: int = 60) -> str:
+        """Build a natural, human-readable MBA listing title (no pipe-stuffing)."""
+        base = (design_text or "").strip().strip(".")
+        # ein kurzes, beschreibendes Keyword waehlen, das noch nicht im Text steht
+        extra = ""
         for kw in keywords:
-            candidate = " | ".join(parts + [kw.title()])
-            if len(candidate) <= max_len:
-                parts.append(kw.title())
-            else:
+            k = (kw or "").strip()
+            if k and k.lower() not in base.lower() and len(k) <= 18:
+                extra = k.title()
                 break
-
-        # Add "T-Shirt" if it fits
-        title = " | ".join(parts)
-        if len(title) + 10 <= max_len:
-            title += " T-Shirt"
-
-        return title[:max_len]
+        # Kandidaten in absteigender Reichhaltigkeit, erster der in max_len passt
+        candidates = []
+        if extra:
+            candidates.append(f"{base} {extra} Gift Tee")
+            candidates.append(f"{base} {extra} Tee")
+        candidates += [f"{base} Funny Gift Tee", f"{base} Tee", base]
+        for cand in candidates:
+            if len(cand) <= max_len:
+                return cand
+        return base[:max_len]
 
     def _build_bullet(self, keywords: list[str], prefix: str,
                       audience: str, max_len: int = 256) -> str:

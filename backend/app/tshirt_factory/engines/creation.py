@@ -66,7 +66,13 @@ class CreationEngine:
 
         # 3. Generate designs with Claude
         designs = []
-        generated_texts = []
+        # Vielfalt: zuletzt erstellte Designs meiden (nicht nur Batch-intern)
+        recent = await self.db.execute(
+            select(DesignPrompt.primary_text)
+            .order_by(DesignPrompt.created_at.desc())
+            .limit(25)
+        )
+        generated_texts = [t for (t,) in recent.all() if t]
         for dtype in types:
             prompt = self._build_claude_prompt(context, dtype, seasonal_event, avoid=generated_texts)
             design_data = await self._call_claude(prompt)
@@ -250,6 +256,7 @@ that has a high probability of selling.
 - At most ONE simple icon; clean, readable, no busy/illustrated backgrounds.
 - ABSOLUTELY NO political, patriotic, religious, election or flag themes — they get rejected on this account.
 - Match the niche's winning font, colors, design type and humor type above.
+- VARY the format and wording from earlier designs — do NOT reuse the same gimmick (e.g. "Loading...", progress bars, "Est. ...") repeatedly. Bring a fresh angle.
 {avoid_info}
 ## Your Task
 Create ONE T-shirt design concept. Return ONLY valid JSON (no markdown, no explanation):
@@ -289,6 +296,7 @@ IMPORTANT RULES:
             message = self.claude.messages.create(
                 model=tsf_settings.ANTHROPIC_MODEL,
                 max_tokens=1500,
+                temperature=1.0,  # mehr Streuung -> weniger Wiederholung
                 messages=[{"role": "user", "content": prompt}],
             )
 
