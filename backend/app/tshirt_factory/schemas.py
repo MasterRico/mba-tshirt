@@ -187,3 +187,24 @@ class LearningInsightOut(BaseModel):
 class SalesImportIn(BaseModel):
     """Roh-CSV aus dem Merch 'earnings'-Export (transaktionsbasiert)."""
     csv_data: str
+
+
+# ─── Vision / Know-how Ingest ─────────────────────────────────────────
+
+class VisionIngestItem(BaseModel):
+    image_url: str
+    niche: str
+    asin: Optional[str] = None
+    title: Optional[str] = None
+    bsr: Optional[int] = None
+    price: Optional[float] = None
+    review_count: Optional[int] = None
+    rating: Optional[float] = None
+    source: str = "flying_research"
+    marketplace: str = "com"
+    attributes: Optional[dict] = None  # vorab-analysiert; sonst Vision serverseitig
+
+
+class VisionIngestIn(BaseModel):
+    items: list[VisionIngestItem]
+    run_analysis: bool = True

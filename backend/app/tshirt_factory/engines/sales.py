@@ -93,6 +93,7 @@ class SalesTracker:
             else:
                 self.db.add(MbaSale(
                     asin=asin, marketplace=mkt, year_month=ym,
+                    title=v["title"],
                     currency=v["currency"], units=v["units"],
                     earnings=round(v["earnings"], 2),
                 ))

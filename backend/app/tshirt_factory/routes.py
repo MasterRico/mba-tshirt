@@ -401,3 +401,56 @@ async def get_mba_sales_summary(db: AsyncSession = Depends(get_db)):
     from app.tshirt_factory.engines.sales import SalesTracker
     tracker = SalesTracker(db)
     return await tracker.get_summary()
+
+
+# ─── Vision Know-how Ingest (Winner-Designs -> NicheProfile) ──────────
+
+from app.tshirt_factory.schemas import VisionIngestIn  # noqa: E402
+
+
+@router.post("/research/vision-ingest")
+async def vision_ingest(data: VisionIngestIn, db: AsyncSession = Depends(get_db)):
+    """Analysiert Winner-Design-Bilder (Claude Vision) -> ResearchItems mit
+    visuellen Attributen -> aggregiert via analysis.py zu NicheProfile.
+    Items koennen 'attributes' bereits mitbringen (dann kein Vision-Call)."""
+    from app.tshirt_factory.engines.vision import VisionAnalyzer
+    from app.tshirt_factory.engines.analysis import AnalysisEngine
+    from app.tshirt_factory.models import ResearchItem
+
+    analyzer = VisionAnalyzer()
+    ingested, failed = 0, 0
+    niches = set()
+    for it in data.items:
+        attrs = it.attributes or await analyzer.analyze_url(it.image_url)
+        if not attrs:
+            failed += 1
+            continue
+        db.add(ResearchItem(
+            source=it.source,
+            external_id=it.asin,
+            title=it.title or (attrs.get("text_content") or "")[:500],
+            niche=it.niche,
+            design_type=attrs.get("design_type"),
+            bsr=it.bsr, price=it.price,
+            review_count=it.review_count, rating=it.rating,
+            primary_colors=attrs.get("primary_colors"),
+            font_style=attrs.get("font_style"),
+            text_content=attrs.get("text_content"),
+            design_elements=attrs.get("design_elements"),
+            humor_type=attrs.get("humor_type"),
+            target_audience=attrs.get("target_audience"),
+            marketplace=it.marketplace,
+            image_url=it.image_url,
+            url=(f"https://www.amazon.com/dp/{it.asin}" if it.asin else None),
+        ))
+        ingested += 1
+        niches.add(it.niche)
+    await db.commit()
+
+    profiles = {}
+    if data.run_analysis:
+        ae = AnalysisEngine(db)
+        for n in niches:
+            profiles[n] = await ae.analyze_niche(n)
+        await db.commit()
+    return {"ingested": ingested, "failed": failed, "niches": list(niches), "profiles": profiles}
