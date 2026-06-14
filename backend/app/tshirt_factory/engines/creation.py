@@ -66,11 +66,13 @@ class CreationEngine:
 
         # 3. Generate designs with Claude
         designs = []
+        generated_texts = []
         for dtype in types:
-            prompt = self._build_claude_prompt(context, dtype, seasonal_event)
+            prompt = self._build_claude_prompt(context, dtype, seasonal_event, avoid=generated_texts)
             design_data = await self._call_claude(prompt)
 
             if design_data:
+                generated_texts.append(design_data.get("primary_text", ""))
                 # 4. Compliance check
                 compliance_result = await self.compliance.check_design_prompt(
                     prompt_text=design_data.get("prompt_text", ""),
@@ -184,7 +186,7 @@ class CreationEngine:
         return context
 
     def _build_claude_prompt(self, context: dict, design_type: str,
-                             seasonal_event: str = None) -> str:
+                             seasonal_event: str = None, avoid: list = None) -> str:
         """Build the prompt for Claude to generate a T-shirt design."""
         niche_info = ""
         if context["niches"]:
@@ -192,6 +194,8 @@ class CreationEngine:
             for name, data in context["niches"].items():
                 niche_info += f"\n### {name}\n"
                 niche_info += f"- Top keywords: {data.get('top_keywords', [])}\n"
+                niche_info += f"- WINNING fonts (use one of these): {data.get('top_font_styles', [])}\n"
+                niche_info += f"- WINNING ink colors (use these): {data.get('top_colors', [])}\n"
                 niche_info += f"- Best design types: {data.get('top_design_types', [])}\n"
                 niche_info += f"- Best humor types: {data.get('top_humor_types', [])}\n"
                 niche_info += f"- Competition: {data.get('competition_level', 'unknown')}\n"
@@ -217,6 +221,15 @@ Relevant niches: {s.get('niches', [])}
 Keywords to consider: {s.get('keywords', [])}
 """
 
+        avoid_info = ""
+        if avoid:
+            avoid_list = "\n".join(f"- {a}" for a in avoid if a)
+            avoid_info = (
+                "\n## AVOID DUPLICATES\n"
+                "Do NOT repeat or lightly reword any of these concepts already created in this batch:\n"
+                f"{avoid_list}\nMake something clearly DIFFERENT (different angle/wording).\n"
+            )
+
         return f"""You are an expert Merch by Amazon T-shirt designer with years of experience
 creating bestselling designs. Your task is to create a T-shirt design concept
 that has a high probability of selling.
@@ -232,6 +245,12 @@ that has a high probability of selling.
 {learning_info}
 {seasonal_info}
 
+## HARD BRAND CONSTRAINTS (must follow exactly)
+- Print style: BOLD WHITE or CREAM text on a BLACK shirt, transparent background. Use the WINNING fonts and ink colors listed above for this niche.
+- At most ONE simple icon; clean, readable, no busy/illustrated backgrounds.
+- ABSOLUTELY NO political, patriotic, religious, election or flag themes — they get rejected on this account.
+- Match the niche's winning font, colors, design type and humor type above.
+{avoid_info}
 ## Your Task
 Create ONE T-shirt design concept. Return ONLY valid JSON (no markdown, no explanation):
 
@@ -260,7 +279,8 @@ IMPORTANT RULES:
 4. The text must be FUNNY, CLEVER, or DEEPLY RELATABLE to the target audience
 5. Think about what someone would actually WEAR in public
 6. Consider gift-buying occasions (birthday, christmas, job-related)
-7. The listing title and bullets must be keyword-rich but natural
+7. Listing title: natural, human-readable, keyword-rich but NO pipe/comma keyword-stuffing (never "| Men | Dad | ..."); max 60 characters
+8. Follow the HARD BRAND CONSTRAINTS above without exception
 """
 
     async def _call_claude(self, prompt: str) -> dict | None:
