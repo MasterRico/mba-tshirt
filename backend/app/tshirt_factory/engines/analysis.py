@@ -56,20 +56,21 @@ class AnalysisEngine:
         reviews = []
 
         for item in items:
+            w = self._winner_weight(item.bsr)  # staerkere Winner praegen Muster staerker
             if item.primary_colors:
                 for c in item.primary_colors:
-                    colors[c] += 1
+                    colors[c] += w
             if item.font_style:
-                fonts[item.font_style] += 1
+                fonts[item.font_style] += w
             if item.design_type:
-                design_types[item.design_type] += 1
+                design_types[item.design_type] += w
             if item.humor_type:
-                humor_types[item.humor_type] += 1
+                humor_types[item.humor_type] += w
             if item.target_audience:
-                audiences[item.target_audience] += 1
+                audiences[item.target_audience] += w
             if item.keywords:
                 for kw in item.keywords:
-                    keywords_all[kw] += 1
+                    keywords_all[kw] += w
             if item.bsr:
                 bsr_values.append(item.bsr)
             if item.price:
@@ -259,6 +260,20 @@ class AnalysisEngine:
             if item.target_audience:
                 patterns["audiences"][item.target_audience] += 1
         return patterns
+
+    @staticmethod
+    def _winner_weight(bsr) -> float:
+        """Gewicht eines Winners fuer die Musterbildung: niedriger BSR = staerker.
+        Ohne BSR -> neutral (1.0)."""
+        if not bsr:
+            return 1.0
+        if bsr < 100_000:
+            return 3.0
+        if bsr < 300_000:
+            return 2.0
+        if bsr < 1_000_000:
+            return 1.0
+        return 0.5
 
     def _calculate_opportunity_score(self, interest: float, competition: int) -> float:
         """Higher interest + lower competition = higher opportunity."""
