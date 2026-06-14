@@ -25,7 +25,7 @@ export default function TokenGate({ children }) {
     setBusy(true)
     setError('')
     try {
-      const resp = await fetch('/api/v1/dashboard/stats', {
+      const resp = await fetch('/api/v1/tsf/dashboard', {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (resp.status === 401) {
@@ -48,7 +48,7 @@ export default function TokenGate({ children }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-kdp-900">
       <form onSubmit={submit} className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
-        <h1 className="text-2xl font-bold mb-2">ooopppmmm Tools</h1>
+        <h1 className="text-2xl font-bold mb-2">MBA T-Shirt Factory</h1>
         <p className="text-sm text-gray-600 mb-6">Bitte API-Token eingeben.</p>
         <input
           type="password"
