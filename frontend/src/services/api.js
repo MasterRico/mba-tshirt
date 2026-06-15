@@ -56,6 +56,10 @@ export const api = {
     getSalesSummary: () => request('/tsf/sales/summary'),
     importSales: (csvData) => request('/tsf/sales/import', { method: 'POST', body: JSON.stringify({ csv_data: csvData }) }),
 
+    // Winner-Maschine: Kandidaten-Ranking + Saison-Planer
+    getCandidates: (niche, limit = 20) => request(`/tsf/curation/candidates?limit=${limit}${niche ? `&niche=${encodeURIComponent(niche)}` : ''}`),
+    getSeasonalPlanner: () => request('/tsf/planner/seasonal'),
+
     // Compliance
     checkTrademarks: (terms) => request('/tsf/compliance/check', { method: 'POST', body: JSON.stringify({ terms }) }),
 

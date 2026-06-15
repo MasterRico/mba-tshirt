@@ -11,6 +11,8 @@ import {
 export default function TsfDashboard() {
   const [data, setData] = useState(null)
   const [sales, setSales] = useState(null)
+  const [planner, setPlanner] = useState(null)
+  const [candidates, setCandidates] = useState(null)
   const [loading, setLoading] = useState(true)
   const [pipelineRunning, setPipelineRunning] = useState(false)
 
@@ -32,6 +34,18 @@ export default function TsfDashboard() {
       setSales(s)
     } catch (err) {
       console.error('Sales summary load failed:', err)
+    }
+    try {
+      const pl = await api.tsf.getSeasonalPlanner()
+      setPlanner(pl)
+    } catch (err) {
+      console.error('Planner load failed:', err)
+    }
+    try {
+      const c = await api.tsf.getCandidates(null, 10)
+      setCandidates(c)
+    } catch (err) {
+      console.error('Candidates load failed:', err)
     }
   }
 
@@ -120,6 +134,50 @@ export default function TsfDashboard() {
           value={`$${(perf.avg_revenue_per_design || 0).toFixed(2)}`}
           icon={<BarChart3 size={20} className="text-indigo-500" />}
         />
+      </div>
+
+      {/* Winner-Cockpit: Saison-Planer + Top-Kandidaten */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl shadow-sm border p-6">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Calendar size={20} className="text-amber-600" /> Was jetzt erstellen (Lead-Time)
+          </h2>
+          <div className="space-y-2">
+            {(planner?.recommend_now || []).slice(0, 6).map((p, i) => (
+              <div key={i} className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
+                <div>
+                  <span className="font-medium">{p.name}</span>
+                  <span className="ml-2 text-xs text-gray-500">{(p.niches || []).slice(0, 2).join(', ')}</span>
+                </div>
+                <span className="text-sm font-medium text-amber-700">{p.days_until_peak} Tage bis Peak</span>
+              </div>
+            ))}
+            {(!planner?.recommend_now || planner.recommend_now.length === 0) && (
+              <p className="text-gray-400 text-center py-4">Kein offenes Saison-Fenster gerade.</p>
+            )}
+          </div>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border p-6">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <CheckCircle size={20} className="text-green-600" /> Top Upload-Kandidaten (Know-how-Fit)
+          </h2>
+          <div className="space-y-2">
+            {(candidates || []).slice(0, 8).map((c, i) => (
+              <div key={i} className="flex items-center justify-between p-2 border-b last:border-0">
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{c.primary_text}</div>
+                  <div className="text-xs text-gray-500 truncate">{c.niche || '—'} · {c.font}</div>
+                </div>
+                <span className={`ml-2 text-sm font-semibold ${c.fit_score >= 0.6 ? 'text-green-600' : c.fit_score >= 0.3 ? 'text-amber-600' : 'text-gray-400'}`}>
+                  {Math.round((c.fit_score || 0) * 100)}%
+                </span>
+              </div>
+            ))}
+            {(!candidates || candidates.length === 0) && (
+              <p className="text-gray-400 text-center py-4">Noch keine Kandidaten.</p>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Konto-Umsatz: echte MBA-Verkaeufe (design-unabhaengig) */}
