@@ -551,9 +551,18 @@ async def compliance_preflight(data: dict, db: AsyncSession = Depends(get_db)):
                 flagged.append({"term": iss.get("term"), "type": "text", "issues": [iss]})
     finally:
         await comp.close()
-    return {"compliant": len(flagged) == 0,
+    # Dedupe nach (term, type) -> n-gram-Extraktion kann denselben Treffer
+    # mehrfach liefern; UI soll jede Marke nur einmal sehen.
+    deduped, seen = [], set()
+    for f in flagged:
+        key = (f.get("term"), f.get("type"))
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(f)
+    return {"compliant": len(deduped) == 0,
             "checked": {"text": bool(text), "elements": elements},
-            "flagged": flagged}
+            "flagged": deduped}
 
 
 @router.get("/designs/{design_id}/image-file")
