@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.tshirt_factory.orchestrator import Orchestrator
 from app.tshirt_factory.engines.compliance import ComplianceEngine
-from app.tshirt_factory.engines.learning import LearningEngine
 from app.tshirt_factory.models import (
     DesignPrompt, NicheProfile, ResearchItem, TrendData, LearningInsight,
 )
@@ -31,38 +30,6 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
     orchestrator = Orchestrator(db)
     try:
         return await orchestrator.get_dashboard_data()
-    finally:
-        await orchestrator.close()
-
-
-# ─── Pipeline ─────────────────────────────────────────────────────────
-
-@router.post("/pipeline/full")
-async def run_full_pipeline(db: AsyncSession = Depends(get_db)):
-    """Run the complete automated pipeline."""
-    orchestrator = Orchestrator(db)
-    try:
-        return await orchestrator.run_full_pipeline()
-    finally:
-        await orchestrator.close()
-
-
-@router.post("/pipeline/research")
-async def run_research(db: AsyncSession = Depends(get_db)):
-    """Run research phase only."""
-    orchestrator = Orchestrator(db)
-    try:
-        return await orchestrator.run_research_only()
-    finally:
-        await orchestrator.close()
-
-
-@router.post("/pipeline/analysis")
-async def run_analysis(db: AsyncSession = Depends(get_db)):
-    """Run analysis phase only."""
-    orchestrator = Orchestrator(db)
-    try:
-        return await orchestrator.run_analysis_only()
     finally:
         await orchestrator.close()
 
@@ -184,74 +151,6 @@ async def analyze_niche(niche_id: int, db: AsyncSession = Depends(get_db)):
     return await analysis.analyze_niche(niche.name)
 
 
-# ─── Slots ────────────────────────────────────────────────────────────
-
-@router.get("/slots/summary")
-async def get_slot_summary(db: AsyncSession = Depends(get_db)):
-    """Get current slot usage."""
-    from app.tshirt_factory.engines.slot_manager import SlotManager
-    slots = SlotManager(db)
-    return await slots.get_slot_summary()
-
-
-@router.get("/slots/recommendations")
-async def get_slot_recommendations(db: AsyncSession = Depends(get_db)):
-    """Get niche allocation recommendations."""
-    from app.tshirt_factory.engines.slot_manager import SlotManager
-    slots = SlotManager(db)
-    return await slots.get_niche_allocation_recommendation()
-
-
-@router.get("/slots/rotation-candidates")
-async def get_rotation_candidates(db: AsyncSession = Depends(get_db)):
-    """Get designs that should be rotated out."""
-    from app.tshirt_factory.engines.slot_manager import SlotManager
-    slots = SlotManager(db)
-    return await slots.get_rotation_candidates()
-
-
-# ─── Performance ──────────────────────────────────────────────────────
-
-@router.post("/performance/update")
-async def update_performance(
-    data: PerformanceUpdateIn,
-    db: AsyncSession = Depends(get_db),
-):
-    """Update performance data for a design."""
-    from app.tshirt_factory.engines.performance import PerformanceTracker
-    tracker = PerformanceTracker(db)
-    result = await tracker.update_performance(data.design_id, data.model_dump())
-    await db.commit()
-    return result
-
-
-@router.post("/performance/import-csv")
-async def import_mba_csv(
-    data: PerformanceBulkImportIn,
-    db: AsyncSession = Depends(get_db),
-):
-    """Import MBA sales report CSV."""
-    from app.tshirt_factory.engines.performance import PerformanceTracker
-    tracker = PerformanceTracker(db)
-    return await tracker.import_mba_csv(data.csv_data)
-
-
-@router.get("/performance/summary")
-async def get_performance_summary(db: AsyncSession = Depends(get_db)):
-    """Get overall performance summary."""
-    from app.tshirt_factory.engines.performance import PerformanceTracker
-    tracker = PerformanceTracker(db)
-    return await tracker.get_performance_summary()
-
-
-@router.get("/performance/by-niche")
-async def get_niche_performance(db: AsyncSession = Depends(get_db)):
-    """Get performance breakdown by niche."""
-    from app.tshirt_factory.engines.performance import PerformanceTracker
-    tracker = PerformanceTracker(db)
-    return await tracker.get_niche_performance()
-
-
 # ─── Compliance ───────────────────────────────────────────────────────
 
 @router.post("/compliance/check", response_model=list[TrademarkCheckOut])
@@ -292,63 +191,6 @@ async def list_research_items(
     stmt = stmt.limit(limit)
     result = await db.execute(stmt)
     return result.scalars().all()
-
-
-@router.get("/research/trends", response_model=list[TrendDataOut])
-async def list_trends(
-    direction: str = None,
-    limit: int = 50,
-    db: AsyncSession = Depends(get_db),
-):
-    """List trend data."""
-    stmt = select(TrendData).order_by(TrendData.recorded_at.desc())
-    if direction:
-        stmt = stmt.where(TrendData.trend_direction == direction)
-    stmt = stmt.limit(limit)
-    result = await db.execute(stmt)
-    return result.scalars().all()
-
-
-# ─── Learning ─────────────────────────────────────────────────────────
-
-@router.get("/learning/insights", response_model=list[LearningInsightOut])
-async def list_insights(
-    category: str = None,
-    min_confidence: float = 0.0,
-    db: AsyncSession = Depends(get_db),
-):
-    """List learning insights."""
-    stmt = select(LearningInsight).where(
-        LearningInsight.confidence >= min_confidence
-    ).order_by(LearningInsight.confidence.desc())
-    if category:
-        stmt = stmt.where(LearningInsight.category == category)
-    result = await db.execute(stmt)
-    return result.scalars().all()
-
-
-@router.get("/learning/summary")
-async def get_learning_summary(db: AsyncSession = Depends(get_db)):
-    """Get learning insights summary."""
-    learning = LearningEngine(db)
-    return await learning.get_insights_summary()
-
-
-@router.post("/learning/run")
-async def run_learning_cycle(db: AsyncSession = Depends(get_db)):
-    """Manually trigger a learning cycle."""
-    learning = LearningEngine(db)
-    return await learning.run_learning_cycle()
-
-
-@router.get("/learning/guidance")
-async def get_creation_guidance(
-    niche: str = None,
-    db: AsyncSession = Depends(get_db),
-):
-    """Get actionable creation guidance from learning data."""
-    learning = LearningEngine(db)
-    return await learning.get_creation_guidance(niche)
 
 
 # ─── Keywords ─────────────────────────────────────────────────────────
