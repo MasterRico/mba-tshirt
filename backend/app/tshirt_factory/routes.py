@@ -575,3 +575,64 @@ async def design_image_file(design_id: int):
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="Kein Print-PNG gespeichert")
     return FileResponse(path, media_type="image/png", filename=f"design_{design_id}.png")
+
+
+@router.post("/designs/{design_id}/listing-by-vision")
+async def listing_by_vision(design_id: int, db: AsyncSession = Depends(get_db)):
+    """AI Listing by Vision: liest das Design-Bild und schreibt das komplette
+    MBA-Listing (Brand/Title/2 Bullets/Description) in EN + DE, prueft es durchs
+    Trademark-Pre-Flight-Gate. Braucht ein vorhandenes Design-Bild."""
+    import os
+    import base64
+    from app.tshirt_factory.engines.imagegen import DESIGN_DIR
+    from app.tshirt_factory.engines.listing_vision import ListingVisionWriter, LIMITS
+    from app.tshirt_factory.models import DesignPrompt, DesignImage
+
+    d = (await db.execute(select(DesignPrompt).where(DesignPrompt.id == design_id))).scalar_one_or_none()
+    if not d:
+        raise HTTPException(status_code=404, detail="Design nicht gefunden")
+
+    writer = ListingVisionWriter()
+    b64 = media = None
+    # 1) bevorzugt das gespeicherte Print-PNG
+    path = os.path.join(DESIGN_DIR, f"{design_id}.png")
+    if os.path.exists(path):
+        with open(path, "rb") as f:
+            b64 = base64.standard_b64encode(f.read()).decode("ascii")
+        media = "image/png"
+    else:
+        # 2) sonst die zuletzt gespeicherte Bild-URL
+        img = (await db.execute(
+            select(DesignImage).where(DesignImage.design_id == design_id)
+            .order_by(DesignImage.id.desc()))).scalars().first()
+        if img and img.url:
+            fetched = await writer.fetch_image(img.url)
+            if fetched:
+                b64, media = fetched
+    if not b64:
+        raise HTTPException(status_code=400, detail="Kein Design-Bild vorhanden — erst Bild generieren")
+
+    listing = writer.write_from_image(b64, media)
+    if not listing:
+        raise HTTPException(status_code=502, detail="Listing-Generierung fehlgeschlagen")
+
+    # Pre-Flight-Trademark-Check auf dem EN-Listing
+    en = listing.get("en", {})
+    combined = " ".join([en.get("brand", ""), en.get("title", ""),
+                         en.get("bullet1", ""), en.get("bullet2", ""), en.get("description", "")])
+    from app.tshirt_factory.engines.compliance import ComplianceEngine
+    comp = ComplianceEngine(db)
+    try:
+        chk = await comp.check_design_prompt(combined, en.get("title", ""), en.get("brand", ""))
+    finally:
+        await comp.close()
+    flagged = sorted({(i.get("term") or "") for i in chk.get("issues", []) if i.get("term")})
+
+    return {
+        "design_id": design_id,
+        "en": listing.get("en", {}),
+        "de": listing.get("de", {}),
+        "limits": LIMITS,
+        "compliant": chk.get("is_compliant", True),
+        "flagged": flagged,
+    }

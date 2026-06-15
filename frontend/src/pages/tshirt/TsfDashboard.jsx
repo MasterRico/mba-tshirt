@@ -17,6 +17,8 @@ export default function TsfDashboard() {
   const [genImg, setGenImg] = useState({})
   const [genErr, setGenErr] = useState({})
   const [genBusy, setGenBusy] = useState(null)
+  const [listing, setListing] = useState({})
+  const [listBusy, setListBusy] = useState(null)
   const [loading, setLoading] = useState(true)
   const [pipelineRunning, setPipelineRunning] = useState(false)
 
@@ -81,6 +83,19 @@ export default function TsfDashboard() {
       setGenErr((prev) => ({ ...prev, [id]: err.message || 'Fehler' }))
     } finally {
       setGenBusy(null)
+    }
+  }
+
+  async function makeListing(id) {
+    setListBusy(id)
+    setListing((prev) => ({ ...prev, [id]: { error: null } }))
+    try {
+      const r = await api.tsf.listingByVision(id)
+      setListing((prev) => ({ ...prev, [id]: r }))
+    } catch (err) {
+      setListing((prev) => ({ ...prev, [id]: { error: err.message || 'Fehler' } }))
+    } finally {
+      setListBusy(null)
     }
   }
 
@@ -203,6 +218,13 @@ export default function TsfDashboard() {
                     >
                       {genBusy === c.id ? '…' : 'Bild'}
                     </button>
+                    <button
+                      onClick={() => makeListing(c.id)}
+                      disabled={listBusy === c.id}
+                      className="text-xs px-2 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50"
+                    >
+                      {listBusy === c.id ? '…' : 'Listing'}
+                    </button>
                   </div>
                 </div>
                 {genErr[c.id] && (
@@ -210,6 +232,9 @@ export default function TsfDashboard() {
                 )}
                 {genImg[c.id] && (
                   <img src={genImg[c.id]} alt="" className="mt-2 w-28 h-28 object-cover rounded border" />
+                )}
+                {listing[c.id] && (
+                  <ListingPanel data={listing[c.id]} />
                 )}
               </div>
             ))}
@@ -399,6 +424,46 @@ export default function TsfDashboard() {
           <span className="text-sm font-medium">Performance</span>
         </Link>
       </div>
+    </div>
+  )
+}
+
+function ListingPanel({ data }) {
+  const [lang, setLang] = useState('en')
+  if (data.error) {
+    return <div className="mt-2 text-xs text-rose-700 bg-rose-50 rounded p-2">⚠ {data.error}</div>
+  }
+  const block = data[lang] || {}
+  const limits = data.limits || {}
+  const fields = [
+    ['brand', 'Brand'], ['title', 'Title'],
+    ['bullet1', 'Bullet 1'], ['bullet2', 'Bullet 2'], ['description', 'Description'],
+  ]
+  const copy = (t) => navigator.clipboard && navigator.clipboard.writeText(t || '')
+  return (
+    <div className="mt-2 bg-gray-50 border rounded p-3 text-xs">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex gap-1">
+          {['en', 'de'].map((l) => (
+            <button key={l} onClick={() => setLang(l)}
+              className={`px-2 py-0.5 rounded uppercase ${lang === l ? 'bg-indigo-600 text-white' : 'bg-white border text-gray-600'}`}>
+              {l}
+            </button>
+          ))}
+        </div>
+        {data.compliant
+          ? <span className="text-green-700 bg-green-100 px-2 py-0.5 rounded">✓ TM clear</span>
+          : <span className="text-rose-700 bg-rose-100 px-2 py-0.5 rounded">⚠ TM: {(data.flagged || []).join(', ')}</span>}
+      </div>
+      {fields.map(([key, label]) => (
+        <div key={key} className="mb-2">
+          <div className="flex items-center justify-between text-[10px] text-gray-500">
+            <span>{label} <span className="text-gray-400">({(block[key] || '').length}/{limits[key]})</span></span>
+            <button onClick={() => copy(block[key])} className="text-indigo-600 hover:underline">copy</button>
+          </div>
+          <div className="bg-white border rounded px-2 py-1 whitespace-pre-wrap">{block[key] || '—'}</div>
+        </div>
+      ))}
     </div>
   )
 }

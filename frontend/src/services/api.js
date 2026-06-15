@@ -61,6 +61,7 @@ export const api = {
     getSeasonalPlanner: () => request('/tsf/planner/seasonal'),
     getGaps: (niche, limit = 12) => request(`/tsf/curation/gaps?limit=${limit}${niche ? `&niche=${encodeURIComponent(niche)}` : ''}`),
     generateImage: (id) => request(`/tsf/designs/${id}/generate-image`, { method: 'POST' }),
+    listingByVision: (id) => request(`/tsf/designs/${id}/listing-by-vision`, { method: 'POST' }),
 
     // Compliance
     checkTrademarks: (terms) => request('/tsf/compliance/check', { method: 'POST', body: JSON.stringify({ terms }) }),
