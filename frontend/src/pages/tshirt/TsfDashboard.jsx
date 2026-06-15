@@ -14,6 +14,8 @@ export default function TsfDashboard() {
   const [planner, setPlanner] = useState(null)
   const [candidates, setCandidates] = useState(null)
   const [gaps, setGaps] = useState(null)
+  const [genImg, setGenImg] = useState({})
+  const [genBusy, setGenBusy] = useState(null)
   const [loading, setLoading] = useState(true)
   const [pipelineRunning, setPipelineRunning] = useState(false)
 
@@ -65,6 +67,18 @@ export default function TsfDashboard() {
       console.error('Pipeline failed:', err)
     } finally {
       setPipelineRunning(false)
+    }
+  }
+
+  async function makeImage(id) {
+    setGenBusy(id)
+    try {
+      const r = await api.tsf.generateImage(id)
+      setGenImg((prev) => ({ ...prev, [id]: r.image_url }))
+    } catch (err) {
+      console.error('Image generation failed:', err)
+    } finally {
+      setGenBusy(null)
     }
   }
 
@@ -170,14 +184,28 @@ export default function TsfDashboard() {
           </h2>
           <div className="space-y-2">
             {(candidates || []).slice(0, 8).map((c, i) => (
-              <div key={i} className="flex items-center justify-between p-2 border-b last:border-0">
-                <div className="min-w-0">
-                  <div className="font-medium truncate">{c.primary_text}</div>
-                  <div className="text-xs text-gray-500 truncate">{c.niche || '—'} · {c.font}</div>
+              <div key={i} className="p-2 border-b last:border-0">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{c.primary_text}</div>
+                    <div className="text-xs text-gray-500 truncate">{c.niche || '—'} · {c.font}</div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className={`text-sm font-semibold ${c.fit_score >= 0.6 ? 'text-green-600' : c.fit_score >= 0.3 ? 'text-amber-600' : 'text-gray-400'}`}>
+                      {Math.round((c.fit_score || 0) * 100)}%
+                    </span>
+                    <button
+                      onClick={() => makeImage(c.id)}
+                      disabled={genBusy === c.id}
+                      className="text-xs px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
+                    >
+                      {genBusy === c.id ? '…' : 'Bild'}
+                    </button>
+                  </div>
                 </div>
-                <span className={`ml-2 text-sm font-semibold ${c.fit_score >= 0.6 ? 'text-green-600' : c.fit_score >= 0.3 ? 'text-amber-600' : 'text-gray-400'}`}>
-                  {Math.round((c.fit_score || 0) * 100)}%
-                </span>
+                {genImg[c.id] && (
+                  <img src={genImg[c.id]} alt="" className="mt-2 w-28 h-28 object-cover rounded border" />
+                )}
               </div>
             ))}
             {(!candidates || candidates.length === 0) && (

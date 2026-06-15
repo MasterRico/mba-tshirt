@@ -12,3 +12,4 @@ python-dotenv==1.0.1
 # T-Shirt Design Factory
 anthropic==0.42.0
 pytrends==4.9.2
+Pillow

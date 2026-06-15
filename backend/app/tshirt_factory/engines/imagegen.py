@@ -37,3 +37,37 @@ class IdeogramGenerator:
             return {"url": url, "raw": j if not url else None}
         except Exception as e:
             return {"error": str(e)}
+
+
+DESIGN_DIR = "/app/data/design_images"
+
+
+async def download_and_upscale(image_url: str, design_id: int) -> str | None:
+    """Laedt das Ideogram-PNG, skaliert auf MBA-Format 4500x5400 (zentriert auf
+    schwarzem Grund) und speichert es persistent. Gibt den lokalen Pfad zurueck."""
+    import os
+    import io
+    try:
+        from PIL import Image
+    except Exception as e:
+        logger.warning(f"Pillow nicht installiert: {e}")
+        return None
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as c:
+            r = await c.get(image_url)
+        if r.status_code != 200:
+            return None
+        img = Image.open(io.BytesIO(r.content)).convert("RGB")
+        W, H = 4500, 5400
+        scale = min(W / img.width, H / img.height)
+        new = (max(1, int(img.width * scale)), max(1, int(img.height * scale)))
+        img = img.resize(new, Image.LANCZOS)
+        canvas = Image.new("RGB", (W, H), (0, 0, 0))
+        canvas.paste(img, ((W - new[0]) // 2, (H - new[1]) // 2))
+        os.makedirs(DESIGN_DIR, exist_ok=True)
+        path = os.path.join(DESIGN_DIR, f"{design_id}.png")
+        canvas.save(path, "PNG")
+        return path
+    except Exception as e:
+        logger.warning(f"Upscale/Save fehlgeschlagen: {e}")
+        return None

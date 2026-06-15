@@ -497,6 +497,25 @@ async def generate_design_image(design_id: int, aspect_ratio: str = "1x1",
     res = await IdeogramGenerator().generate(prompt, aspect_ratio=aspect_ratio)
     if res.get("error"):
         raise HTTPException(status_code=502, detail=res["error"])
+    from app.tshirt_factory.engines.imagegen import download_and_upscale
+    local = await download_and_upscale(res.get("url"), design_id)
     db.add(DesignImage(design_id=design_id, url=res.get("url"), prompt=prompt, provider="ideogram"))
     await db.commit()
-    return {"design_id": design_id, "image_url": res.get("url")}
+    return {
+        "design_id": design_id,
+        "image_url": res.get("url"),
+        "print_ready": bool(local),
+        "print_file": f"/api/v1/tsf/designs/{design_id}/image-file" if local else None,
+    }
+
+
+@router.get("/designs/{design_id}/image-file")
+async def design_image_file(design_id: int):
+    """Liefert das gespeicherte 4500x5400 Print-PNG (Upload-fertig)."""
+    import os
+    from fastapi.responses import FileResponse
+    from app.tshirt_factory.engines.imagegen import DESIGN_DIR
+    path = os.path.join(DESIGN_DIR, f"{design_id}.png")
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="Kein Print-PNG gespeichert")
+    return FileResponse(path, media_type="image/png", filename=f"design_{design_id}.png")
