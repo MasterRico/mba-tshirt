@@ -2,14 +2,12 @@ import { Routes, Route, Navigate, NavLink } from 'react-router-dom'
 import { BarChart3, Shirt, TrendingUp, Shield, LogOut } from 'lucide-react'
 import TsfDashboard from './pages/tshirt/TsfDashboard'
 import TsfDesigns from './pages/tshirt/TsfDesigns'
-import TsfResearch from './pages/tshirt/TsfResearch'
 import TsfCompliance from './pages/tshirt/TsfCompliance'
 import TokenGate, { clearStoredToken } from './components/TokenGate'
 
 const navItems = [
   { to: '/tsf', icon: Shirt, label: 'Dashboard' },
   { to: '/tsf/designs', icon: Shirt, label: 'Designs' },
-  { to: '/tsf/research', icon: TrendingUp, label: 'Research' },
   { to: '/tsf/compliance', icon: Shield, label: 'Trademark-Check' },
 ]
 
@@ -59,7 +57,6 @@ export default function App() {
             <Route path="/" element={<Navigate to="/tsf" replace />} />
             <Route path="/tsf" element={<TsfDashboard />} />
             <Route path="/tsf/designs" element={<TsfDesigns />} />
-            <Route path="/tsf/research" element={<TsfResearch />} />
             <Route path="/tsf/compliance" element={<TsfCompliance />} />
           </Routes>
         </div>

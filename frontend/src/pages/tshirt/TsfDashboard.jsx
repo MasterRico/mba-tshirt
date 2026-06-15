@@ -305,10 +305,6 @@ export default function TsfDashboard() {
           <Shirt size={24} className="mx-auto text-purple-500 mb-2" />
           <span className="text-sm font-medium">Designs</span>
         </Link>
-        <Link to="/tsf/research" className="p-4 bg-white rounded-xl shadow-sm border hover:shadow-md transition-shadow text-center">
-          <TrendingUp size={24} className="mx-auto text-blue-500 mb-2" />
-          <span className="text-sm font-medium">Research</span>
-        </Link>
         <Link to="/tsf/compliance" className="p-4 bg-white rounded-xl shadow-sm border hover:shadow-md transition-shadow text-center">
           <AlertTriangle size={24} className="mx-auto text-orange-500 mb-2" />
           <span className="text-sm font-medium">Trademark-Check</span>

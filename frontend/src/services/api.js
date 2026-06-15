@@ -51,9 +51,5 @@ export const api = {
 
     // Compliance
     checkTrademarks: (terms) => request('/tsf/compliance/check', { method: 'POST', body: JSON.stringify({ terms }) }),
-
-    // Research (eingelesene Winner + Keyword-Suggestions)
-    getResearchItems: (source, limit = 50) => request(`/tsf/research/items?limit=${limit}${source ? `&source=${source}` : ''}`),
-    getSuggestions: (keyword) => request(`/tsf/keywords/suggestions?keyword=${encodeURIComponent(keyword)}`),
   },
 }
