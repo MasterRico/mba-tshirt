@@ -483,28 +483,52 @@ async def curation_gaps(niche: str = None, limit: int = 30,
 
 @router.post("/designs/{design_id}/generate-image")
 async def generate_design_image(design_id: int, aspect_ratio: str = "1x1",
+                                force: bool = False,
                                 db: AsyncSession = Depends(get_db)):
-    """Erzeugt via Ideogram ein Bild zum Design-Konzept (schwarzer Hintergrund)."""
+    """Erzeugt via Ideogram ein Bild zum Design-Konzept (schwarzer Hintergrund).
+    Pre-Flight-Trademark-Check VOR der Generierung -> verbrennt keine Credits
+    bei geschuetztem Spruch/Design-Element. force=true ueberspringt das Gate."""
     from app.tshirt_factory.engines.imagegen import IdeogramGenerator
     from app.tshirt_factory.models import DesignPrompt, DesignImage
     d = (await db.execute(select(DesignPrompt).where(DesignPrompt.id == design_id))).scalar_one_or_none()
     if not d:
         raise HTTPException(status_code=404, detail="Design nicht gefunden")
-    base = d.prompt_text or f"{d.primary_text or ''} {d.sub_text or ''}".strip()
-    prompt = (base + " . Render the artwork on a SOLID PURE BLACK background, "
-              "high-contrast print-ready t-shirt graphic, centered, just the design "
-              "(no shirt, no mockup, no border).")
-    res = await IdeogramGenerator().generate(prompt, aspect_ratio=aspect_ratio)
-    if res.get("error"):
-        raise HTTPException(status_code=502, detail=res["error"])
-    from app.tshirt_factory.engines.imagegen import download_and_upscale
-    local = await download_and_upscale(res.get("url"), design_id)
-    db.add(DesignImage(design_id=design_id, url=res.get("url"), prompt=prompt, provider="ideogram"))
-    await db.commit()
-    return {
-        "design_id": design_id,
-        "image_url": res.get("url"),
-        "print_ready": bool(local),
+
+    if not force:
+        from app.tshirt_factory.engines.compliance import ComplianceEngine
+        comp = ComplianceEngine(db)
+        try:
+            chk = await comp.check_design_prompt(d.prompt_text or "", d.primary_text or "", d.listing_title or "")
+        finally:
+            await comp.close()
+        if not chk.get("is_compliant"):
+            flagged = sorted({(i.get("term") or "") for i in chk.get("issues", []) if i.get("term")})
+
+
+@router.post("/compliance/preflight")
+async def compliance_preflight(data: dict, db: AsyncSession = Depends(get_db)):
+    """Prueft Spruch (text) + Design-Elemente (elements: Tier/Objekt) VOR der
+    Erstellung auf Trademark-Risiko -> spart verschwendete Generierung."""
+    from app.tshirt_factory.engines.compliance import ComplianceEngine
+    text = (data.get("text") or "").strip()
+    elements = [str(e).strip() for e in (data.get("elements") or []) if str(e).strip()]
+    comp = ComplianceEngine(db)
+    flagged = []
+    try:
+        for el in elements:
+            r = await comp.check_term(el)
+            if not r["is_safe"]:
+                flagged.append({"term": el, "type": "element", "issues": r["issues"]})
+        if text:
+            r = await comp.check_design_prompt(text, text, "")
+            for iss in r.get("issues", []):
+                flagged.append({"term": iss.get("term"), "type": "text", "issues": [iss]})
+    finally:
+        await comp.close()
+    return {"compliant": len(flagged) == 0,
+            "checked": {"text": bool(text), "elements": elements},
+            "flagged": flagged}
+ool(local),
         "print_file": f"/api/v1/tsf/designs/{design_id}/image-file" if local else None,
     }
 

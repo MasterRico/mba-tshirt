@@ -15,6 +15,7 @@ export default function TsfDashboard() {
   const [candidates, setCandidates] = useState(null)
   const [gaps, setGaps] = useState(null)
   const [genImg, setGenImg] = useState({})
+  const [genErr, setGenErr] = useState({})
   const [genBusy, setGenBusy] = useState(null)
   const [loading, setLoading] = useState(true)
   const [pipelineRunning, setPipelineRunning] = useState(false)
@@ -72,11 +73,12 @@ export default function TsfDashboard() {
 
   async function makeImage(id) {
     setGenBusy(id)
+    setGenErr((prev) => ({ ...prev, [id]: null }))
     try {
       const r = await api.tsf.generateImage(id)
       setGenImg((prev) => ({ ...prev, [id]: r.image_url }))
     } catch (err) {
-      console.error('Image generation failed:', err)
+      setGenErr((prev) => ({ ...prev, [id]: err.message || 'Fehler' }))
     } finally {
       setGenBusy(null)
     }
@@ -203,6 +205,9 @@ export default function TsfDashboard() {
                     </button>
                   </div>
                 </div>
+                {genErr[c.id] && (
+                  <div className="mt-2 text-xs text-rose-700 bg-rose-50 rounded p-2">⚠ {genErr[c.id]}</div>
+                )}
                 {genImg[c.id] && (
                   <img src={genImg[c.id]} alt="" className="mt-2 w-28 h-28 object-cover rounded border" />
                 )}
