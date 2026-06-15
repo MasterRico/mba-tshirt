@@ -28,7 +28,7 @@ class IdeogramGenerator:
         }
         try:
             async with httpx.AsyncClient(timeout=120.0) as c:
-                r = await c.post(API_URL, headers={"Api-Key": self.key}, data=form)
+                r = await c.post(API_URL, headers={"Api-Key": self.key}, json=form)
             if r.status_code != 200:
                 return {"error": f"Ideogram {r.status_code}: {r.text[:300]}"}
             j = r.json()
