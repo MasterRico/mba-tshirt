@@ -13,30 +13,85 @@ from app.tshirt_factory.models import TrademarkCache
 
 logger = logging.getLogger(__name__)
 
-# Well-known trademarked terms in the T-shirt space (hardcoded safety net)
+# Well-known trademarked terms in the T-shirt space (hardcoded safety net).
+# Word-boundary matched (see _check_known_trademarks). Curated to avoid generic
+# words that legitimately appear in wholesome/humor designs (e.g. "cars", "up",
+# "robin", "cowboys", "coco", "soul", "anna"). For franchises with a generic
+# name, the multi-word form is listed instead (e.g. "toy story" not "toy").
 KNOWN_TRADEMARKS = {
-    # Entertainment & Characters
-    "disney", "marvel", "star wars", "harry potter", "pokemon", "pikachu",
-    "nintendo", "mario", "zelda", "mickey mouse", "minnie mouse", "frozen",
-    "batman", "superman", "spider-man", "spiderman", "avengers", "hulk",
-    "iron man", "captain america", "wonder woman", "dc comics",
-    "spongebob", "peppa pig", "paw patrol", "sesame street", "barbie",
-    "transformers", "hello kitty", "sanrio", "looney tunes", "scooby doo",
-    # Sports
-    "nfl", "nba", "mlb", "nhl", "fifa", "ufc", "wwe", "nike", "adidas",
-    "jordan", "under armour", "puma", "reebok", "new balance",
-    # Tech & Brands
-    "apple", "google", "amazon", "microsoft", "tesla", "facebook", "meta",
-    "instagram", "tiktok", "snapchat", "twitter",
-    # Fashion
+    # ── Disney / Pixar ──────────────────────────────────────────────
+    "disney", "disney+", "pixar", "mickey mouse", "minnie mouse", "mickey",
+    "minnie", "donald duck", "daisy duck", "goofy", "winnie the pooh",
+    "tigger", "eeyore", "frozen", "elsa", "olaf", "lion king", "simba",
+    "toy story", "buzz lightyear", "lightning mcqueen", "finding nemo",
+    "monsters inc", "the incredibles", "ratatouille", "wall-e", "encanto",
+    "moana", "tangled", "rapunzel", "little mermaid", "aladdin", "mulan",
+    "pocahontas", "cinderella", "snow white", "dumbo", "bambi", "pinocchio",
+    "peter pan", "tinkerbell", "mary poppins", "maleficent", "cruella",
+    "lilo & stitch", "stitch", "luca",
+    # ── Pokemon ─────────────────────────────────────────────────────
+    "pokemon", "pikachu", "charizard", "bulbasaur", "squirtle", "eevee",
+    "snorlax", "jigglypuff", "gengar", "mewtwo", "ash ketchum", "pokeball",
+    "poke ball",
+    # ── Marvel ──────────────────────────────────────────────────────
+    "marvel", "marvel studios", "avengers", "hulk", "iron man",
+    "captain america", "spider-man", "spiderman", "thor", "loki",
+    "black widow", "black panther", "wakanda", "thanos", "deadpool",
+    "wolverine", "x-men", "groot", "guardians of the galaxy",
+    "doctor strange", "scarlet witch", "hawkeye", "ant-man",
+    "captain marvel", "venom", "daredevil", "magneto",
+    # ── DC ──────────────────────────────────────────────────────────
+    "dc comics", "batman", "superman", "wonder woman", "the flash",
+    "aquaman", "green lantern", "harley quinn", "the joker", "gotham",
+    "supergirl", "batgirl", "catwoman", "justice league", "shazam",
+    # ── Star Wars ───────────────────────────────────────────────────
+    "star wars", "yoda", "baby yoda", "grogu", "darth vader",
+    "luke skywalker", "skywalker", "jedi", "sith", "millennium falcon",
+    "stormtrooper", "chewbacca", "boba fett", "mandalorian", "death star",
+    "obi-wan", "han solo", "princess leia", "lightsaber",
+    # ── Harry Potter ────────────────────────────────────────────────
+    "harry potter", "hogwarts", "gryffindor", "slytherin", "hufflepuff",
+    "ravenclaw", "dumbledore", "voldemort", "hermione", "quidditch",
+    "muggle",
+    # ── Kids / Cartoons / Anime ─────────────────────────────────────
+    "spongebob", "patrick star", "bikini bottom", "peppa pig", "paw patrol",
+    "bluey", "cocomelon", "ryan's world", "teletubbies", "thomas the tank",
+    "thomas & friends", "bob the builder", "dora the explorer", "minions",
+    "despicable me", "shrek", "kung fu panda", "rick and morty",
+    "the simpsons", "homer simpson", "bart simpson", "family guy",
+    "south park", "scooby doo", "tom and jerry", "powerpuff girls",
+    "ben 10", "adventure time", "naruto", "dragon ball", "goku", "one piece",
+    "demon slayer", "my hero academia", "sailor moon", "hello kitty",
+    "sanrio", "sesame street", "barbie", "transformers", "looney tunes",
+    # ── Video Games ─────────────────────────────────────────────────
+    "nintendo", "nintendo switch", "super mario", "mario", "luigi", "zelda",
+    "kirby", "donkey kong", "metroid", "animal crossing", "splatoon",
+    "minecraft", "creeper", "fortnite", "roblox", "among us", "sonic",
+    "pac-man", "pacman", "tetris", "call of duty", "grand theft auto", "gta",
+    "fall guys", "five nights at freddy's", "fnaf",
+    "league of legends", "world of warcraft", "overwatch", "playstation",
+    "xbox",
+    # ── Sports ──────────────────────────────────────────────────────
+    "nfl", "nba", "mlb", "nhl", "fifa", "ufc", "wwe", "super bowl",
+    "olympics", "olympic", "nascar", "premier league", "champions league",
+    "nike", "adidas", "air jordan", "under armour", "puma", "reebok",
+    "new balance",
+    # ── Tech & Brands ───────────────────────────────────────────────
+    "google", "microsoft", "facebook",
+    "instagram", "tiktok", "snapchat", "spotify", "netflix", "lego",
+    "monster energy", "red bull", "gatorade",
+    # ── Auto ────────────────────────────────────────────────────────
+    "ferrari", "lamborghini", "porsche", "harley-davidson",
+    "harley davidson", "john deere", "caterpillar", "yeti",
+    # ── Fashion ─────────────────────────────────────────────────────
     "gucci", "louis vuitton", "chanel", "versace", "prada", "hermes",
     "supreme", "off-white", "balenciaga",
-    # Catchphrases & Slogans
-    "just do it", "i'm lovin' it", "think different", "impossible is nothing",
-    # Other commonly flagged
-    "coca cola", "pepsi", "starbucks", "mcdonalds", "subway",
-    "harley davidson", "jeep", "ford", "chevy", "chevrolet",
-    "john deere", "caterpillar", "yeti",
+    # ── Catchphrases & Slogans ──────────────────────────────────────
+    "just do it", "i'm lovin' it", "think different",
+    "impossible is nothing", "finger lickin' good",
+    "the happiest place on earth",
+    # ── Food & Bev ──────────────────────────────────────────────────
+    "coca cola", "coca-cola", "pepsi", "starbucks", "mcdonalds",
 }
 
 # Patterns that suggest potential trademark issues
@@ -146,9 +201,14 @@ class ComplianceEngine:
         }
 
     def _check_known_trademarks(self, text: str) -> dict | None:
-        """Check against hardcoded known trademarks."""
+        """Check against hardcoded known trademarks.
+
+        Uses word-boundary matching to avoid false positives (e.g. 'afford'
+        must NOT match 'ford', 'man' must NOT match 'iron man'). Multi-word
+        marks are caught via the n-gram extraction in _extract_checkable_terms.
+        """
         for tm in KNOWN_TRADEMARKS:
-            if tm in text or text in tm:
+            if re.search(rf"\b{re.escape(tm)}\b", text, re.IGNORECASE):
                 return {
                     "source": "known_trademarks",
                     "term": tm,
