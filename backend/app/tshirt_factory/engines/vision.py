@@ -26,7 +26,7 @@ Return ONLY valid JSON (no markdown) with exactly these keys:
 {
   "design_type": "one of: text_only | text_with_icon | illustration | typography_art",
   "font_style": "short label, e.g. bold_sans | condensed_impact | script | serif | handwritten | distressed_vintage",
-  "primary_colors": ["main ink colors as simple names, e.g. white, cream, gold, teal"],
+  "primary_colors": ["main ink colors as SIMPLE LOWERCASE NAMES ONLY, e.g. white, black, gold, red, navy, pink, teal — NEVER hex codes"],
   "design_elements": ["notable elements, e.g. distressed_texture, sunset_stripes, badge, icon_coffee, paw, none"],
   "humor_type": "one of: pun | sarcasm | wholesome | dark | identity_statement | none",
   "text_content": "the readable text on the design, verbatim",

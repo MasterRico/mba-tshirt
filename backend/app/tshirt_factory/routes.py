@@ -454,3 +454,20 @@ async def vision_ingest(data: VisionIngestIn, db: AsyncSession = Depends(get_db)
             profiles[n] = await ae.analyze_niche(n)
         await db.commit()
     return {"ingested": ingested, "failed": failed, "niches": list(niches), "profiles": profiles}
+
+
+# ─── Curation & Planner (Winner-Maschine) ─────────────────────────────
+
+@router.get("/curation/candidates")
+async def curation_candidates(niche: str = None, limit: int = 20,
+                              db: AsyncSession = Depends(get_db)):
+    """Designs nach Know-how-Fit gerankt (beste Upload-Kandidaten zuerst)."""
+    from app.tshirt_factory.engines.curation import CurationEngine
+    return await CurationEngine(db).top_candidates(niche=niche, limit=limit)
+
+
+@router.get("/planner/seasonal")
+async def planner_seasonal():
+    """Welche Saison-Designs JETZT erstellen (Lead-Time-aware)."""
+    from app.tshirt_factory.engines.planner import seasonal_plan
+    return seasonal_plan()
