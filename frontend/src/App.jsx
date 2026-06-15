@@ -4,7 +4,6 @@ import TsfDashboard from './pages/tshirt/TsfDashboard'
 import TsfDesigns from './pages/tshirt/TsfDesigns'
 import TsfResearch from './pages/tshirt/TsfResearch'
 import TsfCompliance from './pages/tshirt/TsfCompliance'
-import TsfPerformance from './pages/tshirt/TsfPerformance'
 import TokenGate, { clearStoredToken } from './components/TokenGate'
 
 const navItems = [
@@ -12,7 +11,6 @@ const navItems = [
   { to: '/tsf/designs', icon: Shirt, label: 'Designs' },
   { to: '/tsf/research', icon: TrendingUp, label: 'Research' },
   { to: '/tsf/compliance', icon: Shield, label: 'Trademark-Check' },
-  { to: '/tsf/performance', icon: BarChart3, label: 'Performance' },
 ]
 
 function logout() {
@@ -63,7 +61,6 @@ export default function App() {
             <Route path="/tsf/designs" element={<TsfDesigns />} />
             <Route path="/tsf/research" element={<TsfResearch />} />
             <Route path="/tsf/compliance" element={<TsfCompliance />} />
-            <Route path="/tsf/performance" element={<TsfPerformance />} />
           </Routes>
         </div>
       </main>

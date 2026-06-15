@@ -24,9 +24,6 @@ export const api = {
   // ─── T-Shirt Factory ─────────────────────────────────────────
   tsf: {
     getDashboard: () => request('/tsf/dashboard'),
-    runFullPipeline: () => request('/tsf/pipeline/full', { method: 'POST' }),
-    runResearch: () => request('/tsf/pipeline/research', { method: 'POST' }),
-    runAnalysis: () => request('/tsf/pipeline/analysis', { method: 'POST' }),
 
     // Designs
     generateDesigns: (params) => request('/tsf/designs/generate', { method: 'POST', body: JSON.stringify(params) }),
@@ -41,22 +38,11 @@ export const api = {
     initializeNiches: () => request('/tsf/niches/initialize', { method: 'POST' }),
     analyzeNiche: (id) => request(`/tsf/niches/${id}/analysis`),
 
-    // Slots
-    getSlotSummary: () => request('/tsf/slots/summary'),
-    getSlotRecommendations: () => request('/tsf/slots/recommendations'),
-    getRotationCandidates: () => request('/tsf/slots/rotation-candidates'),
-
-    // Performance
-    updatePerformance: (data) => request('/tsf/performance/update', { method: 'POST', body: JSON.stringify(data) }),
-    importCsv: (csvData) => request('/tsf/performance/import-csv', { method: 'POST', body: JSON.stringify({ csv_data: csvData }) }),
-    getPerformanceSummary: () => request('/tsf/performance/summary'),
-    getNichePerformance: () => request('/tsf/performance/by-niche'),
-
-    // MBA Account Sales (echte Konto-Zahlen, design-unabhaengig)
+    // MBA Account Sales (echte Konto-Zahlen)
     getSalesSummary: () => request('/tsf/sales/summary'),
     importSales: (csvData) => request('/tsf/sales/import', { method: 'POST', body: JSON.stringify({ csv_data: csvData }) }),
 
-    // Winner-Maschine: Kandidaten-Ranking + Saison-Planer
+    // Winner-Maschine: Kandidaten + Saison-Planer + Bild + Listing
     getCandidates: (niche, limit = 20) => request(`/tsf/curation/candidates?limit=${limit}${niche ? `&niche=${encodeURIComponent(niche)}` : ''}`),
     getSeasonalPlanner: () => request('/tsf/planner/seasonal'),
     getGaps: (niche, limit = 12) => request(`/tsf/curation/gaps?limit=${limit}${niche ? `&niche=${encodeURIComponent(niche)}` : ''}`),
@@ -66,18 +52,8 @@ export const api = {
     // Compliance
     checkTrademarks: (terms) => request('/tsf/compliance/check', { method: 'POST', body: JSON.stringify({ terms }) }),
 
-    // Research
+    // Research (eingelesene Winner + Keyword-Suggestions)
     getResearchItems: (source, limit = 50) => request(`/tsf/research/items?limit=${limit}${source ? `&source=${source}` : ''}`),
-    getTrends: (direction) => request(`/tsf/research/trends${direction ? `?direction=${direction}` : ''}`),
-
-    // Learning
-    getInsights: (category) => request(`/tsf/learning/insights${category ? `?category=${category}` : ''}`),
-    getLearningSummary: () => request('/tsf/learning/summary'),
-    runLearning: () => request('/tsf/learning/run', { method: 'POST' }),
-    getGuidance: (niche) => request(`/tsf/learning/guidance${niche ? `?niche=${niche}` : ''}`),
-
-    // Keywords
-    researchKeywords: (niche) => request(`/tsf/keywords/research/${niche}`),
     getSuggestions: (keyword) => request(`/tsf/keywords/suggestions?keyword=${encodeURIComponent(keyword)}`),
   },
 }
