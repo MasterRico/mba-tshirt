@@ -479,3 +479,24 @@ async def curation_gaps(niche: str = None, limit: int = 30,
     """Gewinnermuster, die deine Designs noch nicht abdecken (mach davon mehr)."""
     from app.tshirt_factory.engines.curation import CurationEngine
     return await CurationEngine(db).find_gaps(niche=niche, limit=limit)
+
+
+@router.post("/designs/{design_id}/generate-image")
+async def generate_design_image(design_id: int, aspect_ratio: str = "1x1",
+                                db: AsyncSession = Depends(get_db)):
+    """Erzeugt via Ideogram ein Bild zum Design-Konzept (schwarzer Hintergrund)."""
+    from app.tshirt_factory.engines.imagegen import IdeogramGenerator
+    from app.tshirt_factory.models import DesignPrompt, DesignImage
+    d = (await db.execute(select(DesignPrompt).where(DesignPrompt.id == design_id))).scalar_one_or_none()
+    if not d:
+        raise HTTPException(status_code=404, detail="Design nicht gefunden")
+    base = d.prompt_text or f"{d.primary_text or ''} {d.sub_text or ''}".strip()
+    prompt = (base + " . Render the artwork on a SOLID PURE BLACK background, "
+              "high-contrast print-ready t-shirt graphic, centered, just the design "
+              "(no shirt, no mockup, no border).")
+    res = await IdeogramGenerator().generate(prompt, aspect_ratio=aspect_ratio)
+    if res.get("error"):
+        raise HTTPException(status_code=502, detail=res["error"])
+    db.add(DesignImage(design_id=design_id, url=res.get("url"), prompt=prompt, provider="ideogram"))
+    await db.commit()
+    return {"design_id": design_id, "image_url": res.get("url")}

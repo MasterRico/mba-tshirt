@@ -284,3 +284,17 @@ class MbaSale(Base):
         Index("idx_mba_sale_ym", "year_month"),
         Index("idx_mba_sale_asin", "asin"),
     )
+
+
+class DesignImage(Base):
+    """Von Ideogram generierte Bilder zu einem Design-Konzept."""
+    __tablename__ = "tsf_design_images"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    design_id = Column(Integer, ForeignKey("tsf_design_prompts.id"), nullable=False)
+    url = Column(String(1000), nullable=True)
+    prompt = Column(Text, nullable=True)
+    provider = Column(String(50), default="ideogram")
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (Index("idx_design_image_design", "design_id"),)

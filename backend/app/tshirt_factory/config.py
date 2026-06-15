@@ -14,6 +14,9 @@ class TShirtFactorySettings(BaseSettings):
     ANTHROPIC_API_KEY: Optional[str] = None
     ANTHROPIC_MODEL: str = "claude-sonnet-4-20250514"
 
+    # Ideogram (Bildgenerierung)
+    IDEOGRAM_API_KEY: Optional[str] = None
+
     # Research
     RESEARCH_INTERVAL_HOURS: int = 24
     MAX_RESEARCH_ITEMS_PER_RUN: int = 50
