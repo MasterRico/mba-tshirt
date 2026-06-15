@@ -488,7 +488,7 @@ async def generate_design_image(design_id: int, aspect_ratio: str = "1x1",
     """Erzeugt via Ideogram ein Bild zum Design-Konzept (schwarzer Hintergrund).
     Pre-Flight-Trademark-Check VOR der Generierung -> verbrennt keine Credits
     bei geschuetztem Spruch/Design-Element. force=true ueberspringt das Gate."""
-    from app.tshirt_factory.engines.imagegen import IdeogramGenerator
+    from app.tshirt_factory.engines.imagegen import IdeogramGenerator, download_and_upscale
     from app.tshirt_factory.models import DesignPrompt, DesignImage
     d = (await db.execute(select(DesignPrompt).where(DesignPrompt.id == design_id))).scalar_one_or_none()
     if not d:
@@ -503,6 +503,32 @@ async def generate_design_image(design_id: int, aspect_ratio: str = "1x1",
             await comp.close()
         if not chk.get("is_compliant"):
             flagged = sorted({(i.get("term") or "") for i in chk.get("issues", []) if i.get("term")})
+            raise HTTPException(status_code=409, detail={
+                "message": "Pre-Flight-Trademark-Check fehlgeschlagen",
+                "flagged": flagged,
+                "hint": "force=true ueberspringt das Gate",
+            })
+
+    prompt = (d.prompt_text or d.primary_text or "").strip()
+    if not prompt:
+        raise HTTPException(status_code=400, detail="Kein Prompt-Text am Design")
+
+    res = await IdeogramGenerator().generate(prompt, aspect_ratio=aspect_ratio)
+    if res.get("error"):
+        raise HTTPException(status_code=502, detail=f"Ideogram: {res['error']}")
+    url = res.get("url")
+    if not url:
+        raise HTTPException(status_code=502, detail="Ideogram lieferte keine Bild-URL")
+
+    local = await download_and_upscale(url, design_id)
+    db.add(DesignImage(design_id=design_id, url=url, prompt=prompt, provider="ideogram"))
+    await db.commit()
+    return {
+        "design_id": design_id,
+        "url": url,
+        "local": bool(local),
+        "print_file": f"/api/v1/tsf/designs/{design_id}/image-file" if local else None,
+    }
 
 
 @router.post("/compliance/preflight")
@@ -528,9 +554,6 @@ async def compliance_preflight(data: dict, db: AsyncSession = Depends(get_db)):
     return {"compliant": len(flagged) == 0,
             "checked": {"text": bool(text), "elements": elements},
             "flagged": flagged}
-ool(local),
-        "print_file": f"/api/v1/tsf/designs/{design_id}/image-file" if local else None,
-    }
 
 
 @router.get("/designs/{design_id}/image-file")
