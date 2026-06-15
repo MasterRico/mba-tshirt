@@ -471,3 +471,11 @@ async def planner_seasonal():
     """Welche Saison-Designs JETZT erstellen (Lead-Time-aware)."""
     from app.tshirt_factory.engines.planner import seasonal_plan
     return seasonal_plan()
+
+
+@router.get("/curation/gaps")
+async def curation_gaps(niche: str = None, limit: int = 30,
+                        db: AsyncSession = Depends(get_db)):
+    """Gewinnermuster, die deine Designs noch nicht abdecken (mach davon mehr)."""
+    from app.tshirt_factory.engines.curation import CurationEngine
+    return await CurationEngine(db).find_gaps(niche=niche, limit=limit)

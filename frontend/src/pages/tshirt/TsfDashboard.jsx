@@ -13,6 +13,7 @@ export default function TsfDashboard() {
   const [sales, setSales] = useState(null)
   const [planner, setPlanner] = useState(null)
   const [candidates, setCandidates] = useState(null)
+  const [gaps, setGaps] = useState(null)
   const [loading, setLoading] = useState(true)
   const [pipelineRunning, setPipelineRunning] = useState(false)
 
@@ -46,6 +47,12 @@ export default function TsfDashboard() {
       setCandidates(c)
     } catch (err) {
       console.error('Candidates load failed:', err)
+    }
+    try {
+      const g = await api.tsf.getGaps(null, 12)
+      setGaps(g)
+    } catch (err) {
+      console.error('Gaps load failed:', err)
     }
   }
 
@@ -177,6 +184,24 @@ export default function TsfDashboard() {
               <p className="text-gray-400 text-center py-4">Noch keine Kandidaten.</p>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Luecken-Finder: davon mehr machen */}
+      <div className="bg-white rounded-xl shadow-sm border p-6">
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <Target size={20} className="text-rose-600" /> Lücken: davon solltest du mehr machen
+        </h2>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {(gaps || []).slice(0, 12).map((g, i) => (
+            <div key={i} className="p-3 bg-rose-50 rounded-lg">
+              <div className="text-sm font-medium">{g.action}</div>
+              <div className="text-xs text-gray-500 mt-1">{g.niche} · {g.dimension}</div>
+            </div>
+          ))}
+          {(!gaps || gaps.length === 0) && (
+            <p className="text-gray-400 text-center py-4 col-span-full">Keine offenen Lücken erkannt (oder noch zu wenig Know-how-Daten).</p>
+          )}
         </div>
       </div>
 

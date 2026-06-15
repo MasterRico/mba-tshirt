@@ -59,6 +59,7 @@ export const api = {
     // Winner-Maschine: Kandidaten-Ranking + Saison-Planer
     getCandidates: (niche, limit = 20) => request(`/tsf/curation/candidates?limit=${limit}${niche ? `&niche=${encodeURIComponent(niche)}` : ''}`),
     getSeasonalPlanner: () => request('/tsf/planner/seasonal'),
+    getGaps: (niche, limit = 12) => request(`/tsf/curation/gaps?limit=${limit}${niche ? `&niche=${encodeURIComponent(niche)}` : ''}`),
 
     // Compliance
     checkTrademarks: (terms) => request('/tsf/compliance/check', { method: 'POST', body: JSON.stringify({ terms }) }),

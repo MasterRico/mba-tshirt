@@ -94,3 +94,60 @@ class CurationEngine:
             color_ok = 0.0
         score = round(0.35 * font_ok + 0.25 * color_ok + 0.25 * humor_ok + 0.15 * dt_ok, 2)
         return score, {"font": font_ok, "color": color_ok, "humor": humor_ok, "design_type": dt_ok}
+
+    async def find_gaps(self, niche: str = None, limit: int = 30) -> list[dict]:
+        """Gewinnermuster einer Nische, die deine eigenen Designs noch NICHT
+        abdecken -> gezielte 'mach davon mehr'-Empfehlungen."""
+        profs = (await self.db.execute(select(NicheProfile))).scalars().all()
+        if niche:
+            profs = [p for p in profs if p.name == niche]
+
+        recs = []
+        for p in profs:
+            designs = (await self.db.execute(
+                select(DesignPrompt).where(
+                    DesignPrompt.niche_id == p.id,
+                    DesignPrompt.status == DesignStatus.APPROVED.value,
+                )
+            )).scalars().all()
+            n = len(designs)
+            fonts, humors, dtypes, colors, kw = set(), set(), set(), set(), set()
+            for d in designs:
+                if d.font_suggestion:
+                    fonts.add(d.font_suggestion)
+                if d.humor_type:
+                    humors.add(d.humor_type)
+                if d.design_type:
+                    dtypes.add(d.design_type)
+                for c in (d.color_scheme or []):
+                    colors.add(_norm_color(c))
+                for k in (d.listing_keywords or []):
+                    kw.add(str(k).lower())
+                for w in (d.primary_text or "").lower().split():
+                    kw.add(w)
+
+            def add(dim, missing, action):
+                recs.append({"niche": p.name, "dimension": dim, "missing": missing,
+                             "have_designs": n, "win_rate": round((p.win_rate or 0) * 100, 1),
+                             "action": action})
+
+            for f in (p.top_font_styles or [])[:3]:
+                if f not in fonts:
+                    add("font", f, f"Design im Gewinner-Font '{f}' erstellen")
+            for h in (p.top_humor_types or [])[:3]:
+                if h not in humors:
+                    add("humor", h, f"Humor-Typ '{h}' abdecken")
+            for t in (p.top_design_types or [])[:3]:
+                if t not in dtypes:
+                    add("design_type", t, f"Design-Typ '{t}' abdecken")
+            for c in [_norm_color(x) for x in (p.top_colors or [])[:4]]:
+                if c and c not in colors:
+                    add("color", c, f"Gewinnerfarbe '{c}' nutzen")
+            for k in (p.top_keywords or [])[:8]:
+                kl = str(k).lower().strip()
+                if kl and kl not in kw and not any(kl in x for x in kw):
+                    add("keyword", k, f"Keyword '{k}' bespielen")
+
+        # Nischen, in denen du schon Designs hast (validiert), zuerst
+        recs.sort(key=lambda r: -r["have_designs"])
+        return recs[:limit]
