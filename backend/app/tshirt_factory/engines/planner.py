@@ -47,8 +47,21 @@ def seasonal_plan() -> dict:
             continue
 
     plan.sort(key=lambda x: (not x["upload_window_open"], x["days_until_peak"]))
+
+    MIN_LEAD = 35  # genug Vorlauf, damit ein Upload noch rankt
+    EXCLUDE = {"patriotic", "american", "election", "political", "religious", "christian"}
+
+    def recommendable(p):
+        if not p["upload_window_open"]:
+            return False
+        if p["days_until_peak"] < MIN_LEAD:
+            return False  # zu spaet zum Ranken
+        if any(n in EXCLUDE for n in p.get("niches", [])):
+            return False  # Politik/Patriotik -> Amazon lehnt ab
+        return True
+
     return {
         "today": today.isoformat(),
-        "recommend_now": [p for p in plan if p["upload_window_open"]],
+        "recommend_now": [p for p in plan if recommendable(p)],
         "all": plan,
     }

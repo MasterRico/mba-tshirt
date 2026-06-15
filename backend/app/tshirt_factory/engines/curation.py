@@ -73,11 +73,24 @@ class CurationEngine:
     def _fit(self, d: DesignPrompt, prof: NicheProfile):
         if not prof:
             return round(float(d.composite_score or 0), 2), {"note": "kein Nischen-Profil"}
-        font_ok = 1.0 if d.font_suggestion and d.font_suggestion in (prof.top_font_styles or []) else 0.0
-        humor_ok = 1.0 if d.humor_type and d.humor_type in (prof.top_humor_types or []) else 0.0
-        dt_ok = 1.0 if d.design_type and d.design_type in (prof.top_design_types or []) else 0.0
-        prof_colors = {_norm_color(c) for c in (prof.top_colors or [])}
+        def graded(val, ranked):
+            # 1.0 fuer den #1-Gewinner, abgestuft nach Rang, 0 wenn nicht in Liste
+            ranked = ranked or []
+            if not val or val not in ranked:
+                return 0.0
+            i = ranked.index(val)
+            return 1.0 if i == 0 else 0.7 if i <= 2 else 0.4
+
+        font_ok = graded(d.font_suggestion, prof.top_font_styles)
+        humor_ok = graded(d.humor_type, prof.top_humor_types)
+        dt_ok = graded(d.design_type, prof.top_design_types)
+        prof_colors = [_norm_color(c) for c in (prof.top_colors or [])]
         des_colors = {_norm_color(c) for c in (d.color_scheme or [])}
-        color_ok = 1.0 if (prof_colors & des_colors) else 0.0
+        # Farb-Score: Anteil der Design-Farben, die zu den Top-Gewinnerfarben gehoeren
+        if des_colors:
+            hits = sum(1 for c in des_colors if c in prof_colors)
+            color_ok = round(hits / len(des_colors), 2)
+        else:
+            color_ok = 0.0
         score = round(0.35 * font_ok + 0.25 * color_ok + 0.25 * humor_ok + 0.15 * dt_ok, 2)
         return score, {"font": font_ok, "color": color_ok, "humor": humor_ok, "design_type": dt_ok}
